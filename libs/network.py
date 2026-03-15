@@ -18,12 +18,12 @@
 import requests
 
 
-def getHtmlFromUrl(url):
+def fetchHtml(url):
     r = requests.get(url)
     r.encoding = "utf-8"
     return r.text
 
 
-def getJsonFromUrl(url):
+def fetchJson(url):
     r = requests.get(url)
     return r.json()

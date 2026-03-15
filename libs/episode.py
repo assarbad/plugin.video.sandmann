@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from libs.network import getJsonFromUrl
+from libs.network import fetchJson
 
 
 def mapEpisode(episode):
@@ -32,7 +32,7 @@ def mapEpisode(episode):
 
 
 def appendStreams(episode):
-    details = getJsonFromUrl(episode["url"])
+    details = fetchJson(episode["url"])
 
     streams_data = details["widgets"][0]["mediaCollection"]["embedded"]["_mediaArray"][0]
     mediaStreamArray = streams_data["_mediaStreamArray"]
@@ -54,7 +54,7 @@ def appendStreams(episode):
 
 
 def getEpisodes(episodes_url, quality):
-    episodes_json = getJsonFromUrl(episodes_url)
+    episodes_json = fetchJson(episodes_url)
     episodes_list = episodes_json["teasers"]
 
     item_list = []

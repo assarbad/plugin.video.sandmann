@@ -23,6 +23,8 @@ import sys
 
 from libs.show import getEpisodes
 from libs.episode import mapEpisode, appendStreams
+from libs.network import fetchHtml
+from libs.network import fetchJson
 
 
 # -- Addon --

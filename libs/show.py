@@ -15,11 +15,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from libs.network import getJsonFromUrl
+from libs.network import fetchJson
 
 
 def getShow(url):
-    return getJsonFromUrl(url)
+    return fetchJson(url)
 
 
 def getEpisodes(url):
