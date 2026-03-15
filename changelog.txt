@@ -1,3 +1,7 @@
+version 2.4.0:
+ * use sandmann.de as the official source for videos and metadata
+version 2.3.1:
+ * fix urls for fetching episodes
 version 2.3.0:
  * performance improvements
 version 2.2.2:

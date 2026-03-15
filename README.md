@@ -12,5 +12,8 @@ If you find a bug or have an idea for an new feature - please submit it to GitHu
 
 ## Contributors
 
-- [sorax](https://github.com/sorax), [handfrog](https://github.com/handfrog)
-- Special thanks to [chefmagier](https://github.com/chefmagier), [yafp](https://github.com/yafp), [OBedford](https://github.com/OBedford), [kevleodev](https://github.com/kevleodev)
+- [sorax](https://github.com/sorax), [handfrog](https://github.com/handfrog), [benjwin](https://github.com/benjwin)
+
+### Special thanks to everyone who is reporting issues!
+
+- [chefmagier](https://github.com/chefmagier), [yafp](https://github.com/yafp), [OBedford](https://github.com/OBedford), [kevleodev](https://github.com/kevleodev), [IT-Ludwig](https://github.com/IT-Ludwig), [benjwin](https://github.com/benjwin), [tobybear](https://github.com/tobybear), [tribut](https://github.com/tribut)
