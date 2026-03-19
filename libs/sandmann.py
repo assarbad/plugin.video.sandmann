@@ -39,13 +39,6 @@ addon_icon = addon.getAddonInfo("icon")
 base_path = sys.argv[0]
 
 
-# -- Constants --
-sources = {
-    "rbb": "https://api.ardmediathek.de/page-gateway/widgets/ard/editorials/3GuLb6bWPNyeenTBjK9u5l%3A7561660580516351848?pageNumber=0&pageSize=100",
-    "mdr": "https://api.ardmediathek.de/page-gateway/widgets/ard/editorials/3GuLb6bWPNyeenTBjK9u5l%3A7561660580516351848?pageNumber=0&pageSize=100"
-}
-
-
 # -- Settings --
 dgs = addon.getSettingInt("dgs2")
 interval = addon.getSettingInt("interval2")
