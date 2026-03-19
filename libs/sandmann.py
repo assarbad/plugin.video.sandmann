@@ -19,7 +19,10 @@ import xbmcaddon
 import xbmcgui
 import xbmcplugin
 
+import json
 import sys
+
+from bs4 import BeautifulSoup
 
 from libs.show import getEpisodes
 from libs.episode import mapEpisode, appendStreams
