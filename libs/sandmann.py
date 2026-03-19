@@ -24,8 +24,6 @@ import sys
 
 from bs4 import BeautifulSoup
 
-from libs.show import getEpisodes
-from libs.episode import mapEpisode, appendStreams
 from libs.network import fetchHtml
 from libs.network import fetchJson
 
@@ -48,48 +46,75 @@ source = addon.getSettingInt("source2")
 
 
 def sandmann():
-    if update == 1:
-        li_refresh = xbmcgui.ListItem(label=addon.getLocalizedString(30020))
-        xbmcplugin.addDirectoryItem(addon_handle, base_path, li_refresh, True)
+    li_refresh = xbmcgui.ListItem(label=addon.getLocalizedString(30020))
+    xbmcplugin.addDirectoryItem(addon_handle, base_path, li_refresh, True)
 
-    url = sources["rbb"]
-    if source == 1:
-        url = sources["mdr"]
+    html = fetchWebsite()
 
-    episodes = getEpisodes(url)
-    episodes2 = map(mapEpisode, episodes)
-    episodes3 = filterDgs(episodes2, dgs)
-    episodes4 = map(appendStreams, episodes3)
+    if dgs == 0:
+        episodes = getEpisodes(html, 1)
+    elif dgs == 2:
+        episodes = getEpisodes(html, 2)
+    else:
+        episodes = getEpisodes(html, 1) + getEpisodes(html, 2)
 
     item_list = []
-    for episode in episodes4:
-        item_list.append((getStream(episode, quality), getListItem(episode), False))
+    for episode, description in episodes:
+        path = getEpisodePath(episode)
+        details = fetchEpisodeDetails(path)
 
+        item_list.append((details["stream"], getListItem(details, description), False))
+
+    # xbmcgui.Dialog().ok("DEBUG", f'{item_list[0]}')
     xbmcplugin.addDirectoryItems(addon_handle, item_list, len(item_list))
-
     xbmcplugin.endOfDirectory(addon_handle)
 
 
-def filterDgs(episodes, dgs):
-    if dgs == 0:
-        return [e for e in episodes if e["dgs"] == False]
-    elif dgs == 2:
-        return [e for e in episodes if e["dgs"] == True]
-    else:
-        return episodes
+def fetchWebsite():
+    url = "https://www.sandmann.de/videos/"
+    html = fetchHtml(url)
+
+    return html
 
 
-def getStream(episode, quality):
-    streams = episode["streams"]
+def getEpisodes(html, count):
+    soup = BeautifulSoup(html, "html.parser")
+    episodes = soup.select(f"#main > .count{count} .manualteaserpicture")
+    html_descriptions = soup.select(f"#main > .count{count} .manualteasershorttext p")
+    descriptions = [p.get_text() for p in html_descriptions]
 
-    index = quality - 1
-    if index in streams:
-        return streams[index]
-    else:
-        return streams["auto"]
+    return list(zip(episodes, descriptions))
 
 
-def getListItem(item):
+def getEpisodePath(episode):
+    jsb_string = episode.get("data-jsb")
+    jsb_object = json.loads(jsb_string)
+
+    return jsb_object["media"]
+
+
+def fetchEpisodeDetails(path):
+    json = fetchJson(f"https://www.sandmann.de{path}")
+
+    streams = {}
+    for stream in json["_mediaArray"][0]["_mediaStreamArray"]:
+        streams[stream["_quality"]] = stream["_stream"]
+
+    title = json["rbbtitle"].split(" | ")
+    previewImage = "https://www.sandmann.de" + json["_previewImage"].rsplit("/", 1)[0]
+
+    return {
+        "date": title[2],
+        # "dgs": json["dgs"],
+        "duration": json["_duration"],
+        "fanart": previewImage + "/size=1920x1080.jpg",
+        "stream": streams["auto"],
+        "thumb": previewImage + "/size=640x360.jpg",
+        "title": f"{title[2]} | {title[0]}"
+    }
+
+
+def getListItem(item, description):
     li = xbmcgui.ListItem()
     li.setLabel(item["title"])
     li.setArt({
@@ -101,7 +126,7 @@ def getListItem(item):
         infoLabels={
             "aired": item["date"],
             "duration": item["duration"],
-            "plot": item["desc"],
+            "plot": description,
         }
     )
     li.setProperty("IsPlayable", "true")
