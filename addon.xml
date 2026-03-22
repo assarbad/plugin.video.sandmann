@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<addon id="plugin.video.sandmann" name="Sandmann" version="2.4.0" provider-name="sorax">
+<addon id="plugin.video.sandmann" name="Sandmann" version="2.4.1" provider-name="sorax">
   <requires>
     <import addon="xbmc.python" version="3.0.0"></import>
     <import addon="script.module.requests"/>
@@ -24,8 +24,8 @@
       <icon>resources/assets/icon.png</icon>
       <fanart>resources/assets/fanart.jpg</fanart>
     </assets>
-    <news>v2.4.0:
-      - use sandmann.de as the official source for videos and metadata
+    <news>v2.4.1:
+      - improve error handling
     </news>
   </extension>
 </addon>

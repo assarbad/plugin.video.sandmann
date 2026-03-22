@@ -17,13 +17,17 @@
 
 import requests
 
+TIMEOUT = 10
+
 
 def fetchHtml(url):
-    r = requests.get(url)
+    r = requests.get(url, timeout=TIMEOUT)
+    r.raise_for_status()
     r.encoding = "utf-8"
     return r.text
 
 
 def fetchJson(url):
-    r = requests.get(url)
+    r = requests.get(url, timeout=TIMEOUT)
+    r.raise_for_status()
     return r.json()

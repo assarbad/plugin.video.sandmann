@@ -1,6 +1,6 @@
 # Kodi Media Center language file
-# Addon Name: detektor.fm
-# Addon id: plugin.audio.detektorfm
+# Addon Name: Sandmann
+# Addon id: plugin.video.sandmann
 # Addon Provider: sorax
 msgid ""
 msgstr ""
@@ -67,3 +67,11 @@ msgstr "Manuell"
 msgctxt "#30104"
 msgid "On Start"
 msgstr "Nur beim Start"
+
+msgctxt "#30200"
+msgid "Connection error"
+msgstr "Verbindungsfehler"
+
+msgctxt "#30201"
+msgid "No episodes found"
+msgstr "Keine Folgen gefunden"

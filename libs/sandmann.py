@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import xbmc
 import xbmcaddon
 import xbmcgui
 import xbmcplugin
@@ -23,6 +24,7 @@ import json
 import sys
 
 from bs4 import BeautifulSoup
+from requests.exceptions import RequestException
 
 from libs.network import fetchHtml
 from libs.network import fetchJson
@@ -49,7 +51,15 @@ def sandmann():
     li_refresh = xbmcgui.ListItem(label=addon.getLocalizedString(30020))
     xbmcplugin.addDirectoryItem(addon_handle, base_path, li_refresh, True)
 
-    html = fetchWebsite()
+    try:
+        html = fetchWebsite()
+    except RequestException as e:
+        xbmc.log(f"[{addon_name}] Failed to fetch website: {e}", xbmc.LOGERROR)
+        xbmcgui.Dialog().notification(
+            addon_name, addon.getLocalizedString(30200), xbmcgui.NOTIFICATION_ERROR
+        )
+        xbmcplugin.endOfDirectory(addon_handle)
+        return
 
     if dgs == 0:
         episodes = getEpisodes(html, 1)
@@ -60,12 +70,20 @@ def sandmann():
 
     item_list = []
     for episode, description in episodes:
-        path = getEpisodePath(episode)
-        details = fetchEpisodeDetails(path)
+        try:
+            path = getEpisodePath(episode)
+            details = fetchEpisodeDetails(path)
+            item_list.append((details["stream"], getListItem(details, description), False))
+        except (RequestException, KeyError, IndexError, TypeError, ValueError,
+                json.JSONDecodeError) as e:
+            xbmc.log(f"[{addon_name}] Skipping episode: {e}", xbmc.LOGWARNING)
+            continue
 
-        item_list.append((details["stream"], getListItem(details, description), False))
+    if not item_list:
+        xbmcgui.Dialog().notification(
+            addon_name, addon.getLocalizedString(30201), xbmcgui.NOTIFICATION_WARNING
+        )
 
-    # xbmcgui.Dialog().ok("DEBUG", f'{item_list[0]}')
     xbmcplugin.addDirectoryItems(addon_handle, item_list, len(item_list))
     xbmcplugin.endOfDirectory(addon_handle)
 
@@ -83,34 +101,67 @@ def getEpisodes(html, count):
     html_descriptions = soup.select(f"#main > .count{count} .manualteasershorttext p")
     descriptions = [p.get_text() for p in html_descriptions]
 
+    if not episodes:
+        xbmc.log(f"[{addon_name}] No episodes found for count{count}", xbmc.LOGWARNING)
+        return []
+
+    if len(episodes) != len(descriptions):
+        xbmc.log(
+            f"[{addon_name}] Episode/description count mismatch: "
+            f"{len(episodes)} episodes vs {len(descriptions)} descriptions",
+            xbmc.LOGWARNING,
+        )
+        descriptions.extend([""] * (len(episodes) - len(descriptions)))
+
     return list(zip(episodes, descriptions))
 
 
 def getEpisodePath(episode):
     jsb_string = episode.get("data-jsb")
+    if not jsb_string:
+        raise ValueError("Missing 'data-jsb' attribute on episode element")
+
     jsb_object = json.loads(jsb_string)
+
+    if "media" not in jsb_object:
+        raise KeyError("Missing 'media' key in episode JSON data")
 
     return jsb_object["media"]
 
 
 def fetchEpisodeDetails(path):
-    json = fetchJson(f"https://www.sandmann.de{path}")
+    data = fetchJson(f"https://www.sandmann.de{path}")
+
+    media_array = data.get("_mediaArray")
+    if not media_array or not media_array[0].get("_mediaStreamArray"):
+        raise KeyError("Missing media stream data in API response")
 
     streams = {}
-    for stream in json["_mediaArray"][0]["_mediaStreamArray"]:
-        streams[stream["_quality"]] = stream["_stream"]
+    for stream in media_array[0]["_mediaStreamArray"]:
+        quality = stream.get("_quality")
+        url = stream.get("_stream")
+        if quality is not None and url:
+            streams[quality] = url
 
-    title = json["rbbtitle"].split(" | ")
-    previewImage = "https://www.sandmann.de" + json["_previewImage"].rsplit("/", 1)[0]
+    if "auto" not in streams:
+        raise KeyError("No 'auto' quality stream available")
+
+    title_parts = data.get("rbbtitle", "").split(" | ")
+    date = title_parts[2] if len(title_parts) > 2 else ""
+    name = title_parts[0] if title_parts else ""
+    title = f"{date} | {name}" if date and name else data.get("rbbtitle", "Unbekannt")
+
+    preview_image = data.get("_previewImage", "")
+    if preview_image:
+        preview_image = "https://www.sandmann.de" + preview_image.rsplit("/", 1)[0]
 
     return {
-        "date": title[2],
-        # "dgs": json["dgs"],
-        "duration": json["_duration"],
-        "fanart": previewImage + "/size=1920x1080.jpg",
+        "date": date,
+        "duration": data.get("_duration", 0),
+        "fanart": f"{preview_image}/size=1920x1080.jpg" if preview_image else "",
         "stream": streams["auto"],
-        "thumb": previewImage + "/size=640x360.jpg",
-        "title": f"{title[2]} | {title[0]}"
+        "thumb": f"{preview_image}/size=640x360.jpg" if preview_image else "",
+        "title": title,
     }
 
 
